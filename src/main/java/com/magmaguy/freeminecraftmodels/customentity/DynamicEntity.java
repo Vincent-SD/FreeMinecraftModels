@@ -5,26 +5,37 @@ import com.magmaguy.freeminecraftmodels.MetadataHandler;
 import com.magmaguy.freeminecraftmodels.customentity.core.LegacyHitDetection;
 import com.magmaguy.freeminecraftmodels.customentity.core.ModeledEntityInterface;
 import com.magmaguy.freeminecraftmodels.customentity.core.RegisterModelEntity;
+import com.magmaguy.freeminecraftmodels.dataconverter.BoneBlueprint;
+import com.magmaguy.freeminecraftmodels.dataconverter.CubeBlueprint;
 import com.magmaguy.freeminecraftmodels.dataconverter.FileModelConverter;
 import lombok.Getter;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.NamespacedKey;
-import org.bukkit.World;
+import lombok.Setter;
+import net.minecraft.world.entity.Display;
+import org.bukkit.*;
+import org.bukkit.craftbukkit.v1_20_R3.inventory.CraftItemStack;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.BoundingBox;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class DynamicEntity extends ModeledEntity implements ModeledEntityInterface {
     @Getter
     private static final List<DynamicEntity> dynamicEntities = new ArrayList<>();
+    @Getter @Setter
+    private Display.ItemDisplay minecraftEntity;
     @Getter
     private final String name = "default";
     private BukkitTask skeletonSync = null;
@@ -67,8 +78,27 @@ public class DynamicEntity extends ModeledEntity implements ModeledEntityInterfa
                 player.hideEntity(MetadataHandler.PLUGIN, livingEntity);
             }
         });
-
         livingEntity.getPersistentDataContainer().set(namespacedKey, PersistentDataType.BYTE, (byte) 0);
+
+        //find and store
+        dynamicEntity.getSkeleton().getBones().forEach(bone -> {
+            if (bone.getBoneBlueprint().isHead()){
+
+                com.magmaguy.easyminecraftgoals.v1_20_R3.packets.PacketDisplayEntity test =
+                        (com.magmaguy.easyminecraftgoals.v1_20_R3.packets.PacketDisplayEntity) bone.getBoneTransforms().getPacketDisplayEntity();
+                try {
+                    Field field = test.getClass().getDeclaredField("itemDisplay");
+                    field.setAccessible(true);
+                    Object value = field.get(test);
+                    Display.ItemDisplay mcEntity = ( Display.ItemDisplay) value;
+                    dynamicEntity.setMinecraftEntity(mcEntity);
+
+                } catch (NoSuchFieldException | IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+
         return dynamicEntity;
     }
 
@@ -110,6 +140,22 @@ public class DynamicEntity extends ModeledEntity implements ModeledEntityInterfa
     private void setHitbox() {
         if (getSkeletonBlueprint().getHitbox() == null) return;
         NMSManager.getAdapter().setCustomHitbox(super.livingEntity, (float) getSkeletonBlueprint().getHitbox().getWidth(), (float) getSkeletonBlueprint().getHitbox().getHeight(), true);
+    }
+
+    public void setHeadTexture(int customModelData){
+        ItemStack itemStack = new ItemStack(Material.LEATHER_HORSE_ARMOR);
+        LeatherArmorMeta itemMeta = (LeatherArmorMeta)itemStack.getItemMeta();
+        itemMeta.setCustomModelData(customModelData);
+        itemMeta.setColor(Color.WHITE);
+        itemStack.setItemMeta(itemMeta);
+        net.minecraft.world.item.ItemStack nmsItemStack = CraftItemStack.asNMSCopy(itemStack);
+        minecraftEntity.a(nmsItemStack);
+    }
+
+    public void test(){
+        Bukkit.getScheduler().runTaskLater(MetadataHandler.PLUGIN,() -> {
+            setHeadTexture(50019);
+        },20*5);
     }
 
     @Override
