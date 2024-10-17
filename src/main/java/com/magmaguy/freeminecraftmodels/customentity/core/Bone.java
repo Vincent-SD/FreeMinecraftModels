@@ -104,6 +104,19 @@ public class Bone {
         }
     }
 
+    //VSD reset location for a bone
+    public void resetLocation(){
+        if (boneTransforms.getPacketArmorStandEntity() != null)
+            boneTransforms.getPacketArmorStandEntity().sendLocationAndRotationPacket(
+                    boneTransforms.getArmorStandTargetLocation(),
+                    boneTransforms.getArmorStandEntityRotation());
+        if (boneTransforms.getPacketDisplayEntity() != null) {
+            boneTransforms.getPacketDisplayEntity().sendLocationAndRotationPacket(
+                    boneTransforms.getDisplayEntityTargetLocation(),
+                    boneTransforms.getDisplayEntityRotation());
+        }
+    }
+
     public void displayTo(Player player) {
         if (boneTransforms.getPacketArmorStandEntity() != null &&
                 (!DefaultConfig.useDisplayEntitiesWhenPossible ||
@@ -135,7 +148,8 @@ public class Bone {
         boneChildren.forEach(Bone::teleport);
     }
 
-    private void sendTeleportPacket() {
+    //VSD Temporary workaround, modified private to public
+    public void sendTeleportPacket() {
         counter++;
         int reset = 20 * 60 * 2;
         if (counter > reset) {

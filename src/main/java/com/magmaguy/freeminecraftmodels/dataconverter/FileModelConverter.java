@@ -104,6 +104,8 @@ public class FileModelConverter {
                 File imageFile = new File(MetadataHandler.PLUGIN.getDataFolder().getAbsolutePath() + File.separatorChar + "output" + File.separatorChar + "FreeMinecraftModels" + File.separatorChar + "assets" + File.separatorChar + "freeminecraftmodels" + File.separatorChar + "textures" + File.separatorChar + "entity" + File.separatorChar + modelName + File.separatorChar + imageName);
                 FileUtils.writeByteArrayToFile(imageFile, inputStream.readAllBytes());
                 BufferedImage bufferedImage = ImageIO.read(imageFile);
+                System.out.println(imageName);
+                //VSD TODO store heads texture for each model
                 imageSize.put(imageName, bufferedImage.getWidth());
             } catch (Exception ex) {
                 Logger.warn("Failed to convert image " + imageName + " to its corresponding image file!");

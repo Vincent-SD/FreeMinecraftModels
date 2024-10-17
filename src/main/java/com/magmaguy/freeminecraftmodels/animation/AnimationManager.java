@@ -2,11 +2,14 @@ package com.magmaguy.freeminecraftmodels.animation;
 
 import com.magmaguy.freeminecraftmodels.MetadataHandler;
 import com.magmaguy.freeminecraftmodels.customentity.ModeledEntity;
+import com.magmaguy.freeminecraftmodels.customentity.core.Bone;
+import com.magmaguy.freeminecraftmodels.customentity.core.BoneTransforms;
 import com.magmaguy.freeminecraftmodels.dataconverter.AnimationsBlueprint;
 import com.magmaguy.freeminecraftmodels.utils.LoopType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
@@ -135,6 +138,10 @@ public class AnimationManager {
                 modeledEntity.remove();
             return;
         }
+        //VSD Temporary workaround, reset idle animation at the end of each loop to avoid LE PUTAIN DE BUG QUI N'A AUCUN SENS
+        else if (animation.getAnimationBlueprint().getAnimationName().equals("idle") && animation.getCounter() % animation.getAnimationBlueprint().getDuration() == 1){
+            modeledEntity.getSkeleton().getBones().forEach(Bone::sendTeleportPacket);
+        }
         int adjustedAnimationPosition = getAdjustedAnimationPosition(animation);
         //Handle rotations
         animation.getAnimationFrames().forEach((key, value) -> {
@@ -151,11 +158,13 @@ public class AnimationManager {
         animation.getAnimationFrames().forEach((key, value) -> {
             if (value == null)
                 key.updateAnimationTranslation(0, 0, 0);
-            else
+            else{
                 key.updateAnimationTranslation(
                         value[adjustedAnimationPosition].xPosition,
                         value[adjustedAnimationPosition].yPosition,
                         value[adjustedAnimationPosition].zPosition);
+            }
+
         });
 
         animation.incrementCounter();

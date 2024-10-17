@@ -5,15 +5,12 @@ import com.magmaguy.freeminecraftmodels.MetadataHandler;
 import com.magmaguy.freeminecraftmodels.customentity.core.LegacyHitDetection;
 import com.magmaguy.freeminecraftmodels.customentity.core.ModeledEntityInterface;
 import com.magmaguy.freeminecraftmodels.customentity.core.RegisterModelEntity;
-import com.magmaguy.freeminecraftmodels.dataconverter.BoneBlueprint;
-import com.magmaguy.freeminecraftmodels.dataconverter.CubeBlueprint;
 import com.magmaguy.freeminecraftmodels.dataconverter.FileModelConverter;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.world.entity.Display;
 import org.bukkit.*;
 import org.bukkit.craftbukkit.v1_20_R3.inventory.CraftItemStack;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -26,16 +23,13 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public class DynamicEntity extends ModeledEntity implements ModeledEntityInterface {
     @Getter
     private static final List<DynamicEntity> dynamicEntities = new ArrayList<>();
     @Getter @Setter
-    private Display.ItemDisplay minecraftEntity;
+    private Display.ItemDisplay minecraftHeadEntity;
     @Getter
     private final String name = "default";
     private BukkitTask skeletonSync = null;
@@ -80,7 +74,7 @@ public class DynamicEntity extends ModeledEntity implements ModeledEntityInterfa
         });
         livingEntity.getPersistentDataContainer().set(namespacedKey, PersistentDataType.BYTE, (byte) 0);
 
-        //find and store
+        //find and store minecraft head entity
         dynamicEntity.getSkeleton().getBones().forEach(bone -> {
             if (bone.getBoneBlueprint().isHead()){
 
@@ -91,7 +85,7 @@ public class DynamicEntity extends ModeledEntity implements ModeledEntityInterfa
                     field.setAccessible(true);
                     Object value = field.get(test);
                     Display.ItemDisplay mcEntity = ( Display.ItemDisplay) value;
-                    dynamicEntity.setMinecraftEntity(mcEntity);
+                    dynamicEntity.setMinecraftHeadEntity(mcEntity);
 
                 } catch (NoSuchFieldException | IllegalAccessException e) {
                     throw new RuntimeException(e);
@@ -124,7 +118,6 @@ public class DynamicEntity extends ModeledEntity implements ModeledEntityInterfa
                 getSkeleton().setCurrentLocation(entityLocation);
                 getSkeleton().setCurrentHeadPitch(livingEntity.getEyeLocation().getPitch());
                 getSkeleton().setCurrentHeadYaw(livingEntity.getEyeLocation().getYaw());
-
             }
         }.runTaskTimer(MetadataHandler.PLUGIN, 0, 1);
     }
@@ -149,7 +142,7 @@ public class DynamicEntity extends ModeledEntity implements ModeledEntityInterfa
         itemMeta.setColor(Color.WHITE);
         itemStack.setItemMeta(itemMeta);
         net.minecraft.world.item.ItemStack nmsItemStack = CraftItemStack.asNMSCopy(itemStack);
-        minecraftEntity.a(nmsItemStack);
+        minecraftHeadEntity.a(nmsItemStack);
     }
 
     public void test(){
