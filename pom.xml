@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.magmaguy</groupId>
-    <artifactId>FreeMinecraftModels</artifactId>
+    <artifactId>FreeMinecraftModelsSkytale</artifactId>
     <version>1.4.2</version>
 
     <properties>
@@ -121,7 +121,7 @@
     </dependencies>
 
     <build>
-        <finalName>FreeMinecraftModels</finalName>
+        <finalName>FreeMinecraftModelsSkytale</finalName>
 
         <plugins>
             <plugin>
@@ -141,7 +141,7 @@
                     <relocations>
                         <relocation>
                             <pattern>org.bstats</pattern>
-                            <shadedPattern>com.magmaguy.freeminecraftmodels</shadedPattern>
+                            <shadedPattern>com.magmaguy.FreeMinecraftModels-skytale</shadedPattern>
                         </relocation>
                     </relocations>
                 </configuration>
@@ -158,14 +158,13 @@
     </build>
 
     <distributionManagement>
-        <snapshotRepository>
-            <id>magmaguy-repo-snapshots</id>
-            <url>https://repo.magmaguy.com/snapshots</url>
-        </snapshotRepository>
+<!--        <snapshotRepository>-->
+<!--            <id>magmaguy-repo-snapshots</id>-->
+<!--            <url>https://repo.magmaguy.com/snapshots</url>-->
+<!--        </snapshotRepository>-->
         <repository>
-            <id>magmaguy-repo-snapshots</id>
-            <name>MagmaGuy's Repository</name>
-            <url>https://repo.magmaguy.com/releases</url>
+            <id>skytale-public</id>
+            <url>https://repository.skytale.fr/artifactory/public</url>
         </repository>
     </distributionManagement>
 </project>

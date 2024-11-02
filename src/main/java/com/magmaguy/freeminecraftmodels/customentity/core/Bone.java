@@ -123,8 +123,16 @@ public class Bone {
                         Floodgate.isBedrock(player) ||
                         VersionChecker.serverVersionOlderThan(19, 4)))
             boneTransforms.getPacketArmorStandEntity().displayTo(player.getUniqueId());
-        else if (boneTransforms.getPacketDisplayEntity() != null)
-            boneTransforms.getPacketDisplayEntity().displayTo(player.getUniqueId());
+        else if (boneTransforms.getPacketDisplayEntity() != null){
+            //VSD ignore exception to avoid spamming
+            try{
+                boneTransforms.getPacketDisplayEntity().displayTo(player.getUniqueId());
+            }
+            catch (NullPointerException ignore){
+
+            }
+        }
+
     }
 
     public void hideFrom(UUID playerUUID) {
