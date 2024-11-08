@@ -36,7 +36,7 @@ public class CubeBlueprint {
         cubeJSON.remove("uuid");
         cubeJSON.remove("color");
         cubeJSON.remove("autouv");
-        cubeJSON.remove("name");
+//        cubeJSON.remove("name");
         cubeJSON.remove("box_uv");
         cubeJSON.remove("render_order");
         cubeJSON.remove("allow_mirror_modeling");
@@ -72,8 +72,10 @@ public class CubeBlueprint {
 
     private void setTextureData(double projectResolution, Map<String, Object> map, String modelName) {
         if (map == null || map.get("texture") == null) {
-            if (textureDataExists != null && textureDataExists)
+            if (textureDataExists != null && textureDataExists){
+                Logger.warn(cubeJSON.get("name").toString());
                 Logger.warn("A cube in the model " + modelName + " has a face which does not have a texture while the rest of the cube has a texture. Minecraft does not allow this. Go through every cube in that model and make sure they all either have or do not have textures on all faces, but don't mix having and not having textures for the same cube. The model will appear with the debug black and purple cube texture until fixed.");
+            }
             textureDataExists = false;
             return;
         }

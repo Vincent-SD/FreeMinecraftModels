@@ -161,10 +161,12 @@ public class AnimationBlueprint {
             int durationBetweenKeyframes = animationFrame.getTimeInTicks() - previousFrame.getTimeInTicks();
             for (int j = 0; j < durationBetweenKeyframes; j++) {
                 int currentFrame = j + previousFrame.getTimeInTicks();
-                animationFramesArray[currentFrame].xPosition = -lerp(previousFrame.getDataX(), animationFrame.getDataX(), j / (float) durationBetweenKeyframes) / 16f;
-                animationFramesArray[currentFrame].yPosition = lerp(previousFrame.getDataY(), animationFrame.getDataY(), j / (float) durationBetweenKeyframes) / 16f;
-                animationFramesArray[currentFrame].zPosition = lerp(previousFrame.getDataZ(), animationFrame.getDataZ(), j / (float) durationBetweenKeyframes) / 16f;
-            }
+                if (currentFrame < animationFramesArray.length){
+                    animationFramesArray[currentFrame].xPosition = -lerp(previousFrame.getDataX(), animationFrame.getDataX(), j / (float) durationBetweenKeyframes) / 16f;
+                    animationFramesArray[currentFrame].yPosition = lerp(previousFrame.getDataY(), animationFrame.getDataY(), j / (float) durationBetweenKeyframes) / 16f;
+                    animationFramesArray[currentFrame].zPosition = lerp(previousFrame.getDataZ(), animationFrame.getDataZ(), j / (float) durationBetweenKeyframes) / 16f;
+                }
+          }
             previousFrame = animationFrame;
             if (animationFrame.getTimeInTicks() > lastFrame.getTimeInTicks()) lastFrame = animationFrame;
             if (animationFrame.getTimeInTicks() < firstFrame.getTimeInTicks()) firstFrame = animationFrame;
