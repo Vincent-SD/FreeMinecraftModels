@@ -2,6 +2,7 @@ package com.magmaguy.freeminecraftmodels.config;
 
 import com.google.gson.Gson;
 import com.magmaguy.freeminecraftmodels.MetadataHandler;
+import com.magmaguy.freeminecraftmodels.dataconverter.AnimationConverter;
 import com.magmaguy.freeminecraftmodels.dataconverter.BoneBlueprint;
 import com.magmaguy.freeminecraftmodels.dataconverter.FileModelConverter;
 import com.magmaguy.magmacore.util.Logger;
@@ -42,6 +43,9 @@ public class ModelsFolder {
         HashMap<String, Object> leatherHorseArmor = new HashMap<>();
         leatherHorseArmor.put("parent", "item/generated");
         leatherHorseArmor.put("textures", Collections.singletonMap("layer0", "minecraft:item/leather_horse_armor"));
+
+        //Convert all animations to blender format to BlockBench format
+        AnimationConverter.convertAll();
 
         processFolders(file, bbModelConverterList, leatherHorseArmor, true);
         leatherHorseArmor.put("data", counter - 1 + folderCounter * 1000);

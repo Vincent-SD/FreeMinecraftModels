@@ -31,6 +31,8 @@ public class ModelArmorStand {
             return;
         }
         ItemStack leatherHorseArmor = new ItemStack(Material.LEATHER_HORSE_ARMOR);
+        //ItemStack leatherHorseArmor = new ItemStack(Material.LEATHER_BOOTS);
+        //LeatherArmorMeta itemMeta = (LeatherArmorMeta) leatherHorseArmor.getItemMeta();
         LeatherArmorMeta itemMeta = (LeatherArmorMeta) leatherHorseArmor.getItemMeta();
         itemMeta.setColor(Color.WHITE);
         if (bone.getBoneBlueprint().getModelID() != null)

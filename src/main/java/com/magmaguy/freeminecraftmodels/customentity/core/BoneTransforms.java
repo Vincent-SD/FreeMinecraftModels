@@ -17,6 +17,7 @@ public class BoneTransforms {
     private final Bone parent;
     private final Bone bone;
     private final TransformationMatrix localMatrix = new TransformationMatrix();
+    @Getter
     private TransformationMatrix globalMatrix = new TransformationMatrix();
     @Getter
     private PacketModelEntity packetArmorStandEntity = null;
@@ -33,10 +34,24 @@ public class BoneTransforms {
         updateGlobalTransform();
     }
 
+    /**
+     *
+     * @param shouldHeadBeAnimated whether the head should follow the animation or be manually oriented in another way
+     */
+    public void transform(boolean shouldHeadBeAnimated) {
+        updateLocalTransform();
+        updateGlobalTransform(shouldHeadBeAnimated);
+    }
+
     public void updateGlobalTransform() {
+        updateGlobalTransform(true);
+    }
+
+    public void updateGlobalTransform(boolean animateHead) {
         if (parent != null) {
             TransformationMatrix.multiplyMatrices(parent.getBoneTransforms().globalMatrix, localMatrix, globalMatrix);
-            if (bone.getBoneBlueprint().isHead()) {
+            if (bone.getBoneBlueprint().isHead() && !animateHead) {
+                //makes the head follow a given direction -> breaks animation
                 globalMatrix.resetRotation();
                 float yaw = -bone.getSkeleton().getCurrentHeadYaw() + 180;
                 globalMatrix.rotateY((float) Math.toRadians(yaw));

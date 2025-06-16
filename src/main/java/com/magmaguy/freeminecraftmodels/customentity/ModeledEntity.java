@@ -1,5 +1,6 @@
 package com.magmaguy.freeminecraftmodels.customentity;
 
+import com.magmaguy.freeminecraftmodels.MetadataHandler;
 import com.magmaguy.freeminecraftmodels.animation.AnimationManager;
 import com.magmaguy.freeminecraftmodels.customentity.core.ModeledEntityInterface;
 import com.magmaguy.freeminecraftmodels.customentity.core.Skeleton;
@@ -8,6 +9,8 @@ import com.magmaguy.freeminecraftmodels.dataconverter.FileModelConverter;
 import com.magmaguy.freeminecraftmodels.dataconverter.SkeletonBlueprint;
 import com.magmaguy.freeminecraftmodels.utils.ChunkHasher;
 import lombok.Getter;
+import lombok.Setter;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.World;
@@ -19,8 +22,8 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.function.Supplier;
 
 public class ModeledEntity implements ModeledEntityInterface {
 
@@ -41,6 +44,14 @@ public class ModeledEntity implements ModeledEntityInterface {
     private Skeleton skeleton;
     @Getter
     private List<TextDisplay> nametags = new ArrayList<>();
+    @Getter
+    private String currentlyLoopingAnimationName;
+    @Getter
+    private int currentlyLoopingAnimationsTask;
+
+
+    @Getter @Setter
+    protected Supplier<Vector> headRotationSupplier;
 
     public ModeledEntity(String entityID, Location spawnLocation) {
         this.entityID = entityID;
@@ -72,16 +83,44 @@ public class ModeledEntity implements ModeledEntityInterface {
         if (animationManager != null) animationManager.start();
     }
 
-    /**
-     * Plays an animation as set by the string name.
-     *
-     * @param animationName  Name of the animation - case-sensitive
-     * @param blendAnimation If the animation should blend. If set to false, the animation passed will stop other animations.
-     *                       If set to true, the animation will be mixed with any currently ongoing animations
-     * @return Whether the animation successfully started playing.
-     */
-    public boolean playAnimation(String animationName, boolean blendAnimation) {
-        return animationManager.playAnimation(animationName, blendAnimation);
+    public boolean playAnimation(String animationName) {
+        return playAnimation(animationName,0);
+    }
+
+    public boolean playAnimation(String animationName, int blendDuration) {
+        boolean returnValue = animationManager.playAnimation(animationName, blendDuration);
+        cancelAnimationLoop();
+        return returnValue;
+    }
+
+    public boolean playAnimationLoop(String animationName) {
+        return playAnimationLoop(animationName,0);
+    }
+
+    public boolean playAnimationLoop(String animationName, int blendDuration){
+        int duration = animationManager.getAnimations().getAnimations().get(animationName).getAnimationBlueprint().getDuration();
+        if (animationManager.playAnimation(animationName,blendDuration)){
+            cancelAnimationLoop();
+            int taskId = Bukkit.getScheduler().runTaskTimerAsynchronously(MetadataHandler.PLUGIN,() -> {
+                animationManager.playAnimation(animationName,0);
+            },duration,duration).getTaskId();
+            this.currentlyLoopingAnimationName = animationName;
+            this.currentlyLoopingAnimationsTask = taskId;
+            return true;
+        }
+        return false;
+    }
+
+    private void cancelAnimationLoop(){
+        if ( !isAnimationLooping() ) return;
+        int taskId = this.currentlyLoopingAnimationsTask;
+        Bukkit.getScheduler().cancelTask(taskId);
+        this.currentlyLoopingAnimationName = null;
+        this.currentlyLoopingAnimationsTask = -1;
+    }
+
+    private boolean isAnimationLooping(){
+        return this.currentlyLoopingAnimationName != null;
     }
 
     public void loadChunk() {
@@ -109,6 +148,7 @@ public class ModeledEntity implements ModeledEntityInterface {
      */
     public void stopCurrentAnimations() {
         if (animationManager != null) animationManager.stop();
+        cancelAnimationLoop();
     }
 
     public boolean hasAnimation(String animationName) {

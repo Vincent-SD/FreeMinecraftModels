@@ -6,8 +6,12 @@ import com.magmaguy.freeminecraftmodels.thirdparty.Floodgate;
 import com.magmaguy.freeminecraftmodels.utils.VersionChecker;
 import lombok.Getter;
 import org.bukkit.Color;
+import org.bukkit.Location;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
+import org.bukkit.util.NumberConversions;
+import org.bukkit.util.Vector;
+import org.joml.Vector3d;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
@@ -49,10 +53,38 @@ public class Bone {
         animationRotation = new Vector3f((float) Math.toRadians(x), (float) Math.toRadians(y), (float) Math.toRadians(z));
     }
 
+    public void updateAnimationRotationFromDirection(Vector vector) {
+
+        final double _2PI = 2 * Math.PI;
+        final double x = vector.getX();
+        final double z = vector.getZ();
+        float pitch;
+        float yaw = 0;
+
+        if (x == 0 && z == 0) {
+            pitch = vector.getY() > 0 ? -90 : 90;
+        }
+        else{
+            double theta = Math.atan2(-x, z);
+            yaw = (float) Math.toDegrees((theta + _2PI) % _2PI);
+            double x2 = NumberConversions.square(x);
+            double z2 = NumberConversions.square(z);
+            double xz = Math.sqrt(x2 + z2);
+            pitch = (float) Math.toDegrees(Math.atan(-vector.getY() / xz));
+        }
+        animationRotation = new Vector3f((float) Math.toRadians(pitch), (float) Math.toRadians(yaw), 0.0f);
+    }
+
+
     //Note that several optimizations might be possible here, but that syncing with a base entity is necessary.
     public void transform() {
-        boneTransforms.transform();
-        boneChildren.forEach(Bone::transform);
+        transform(true);
+    }
+
+    //Note that several optimizations might be possible here, but that syncing with a base entity is necessary.
+    public void transform(boolean shouldHeadBeAnimated) {
+        boneTransforms.transform(shouldHeadBeAnimated);
+        boneChildren.forEach(bone -> bone.transform(shouldHeadBeAnimated));
         skeleton.getSkeletonWatchers().sendPackets(this);
     }
 
@@ -171,4 +203,35 @@ public class Bone {
             boneTransforms.getPacketDisplayEntity().teleport(boneTransforms.getDisplayEntityTargetLocation());
         }
     }
+
+    public BoneTransformsSnapshot getCurrentAnimationPose() {
+        return new BoneTransformsSnapshot(
+                this.animationRotation.get(0),
+                this.animationRotation.get(1),
+                this.animationRotation.get(2),
+                this.animationTranslation.get(0),
+                this.animationTranslation.get(1),
+                this.animationTranslation.get(2)
+        );
+    }
+
+    private float normalizeAngle(float angle) {
+        while (angle > Math.PI) angle -= 2 * Math.PI;
+        while (angle < -Math.PI) angle += 2 * Math.PI;
+        return angle;
+    }
+
+
+    public BoneTransformsSnapshot getLivePose() {
+        float[] rot = this.getBoneTransforms().getGlobalMatrix().getRotation();
+        float[] pos = this.getBoneTransforms().getGlobalMatrix().getTranslation();
+
+        return new BoneTransformsSnapshot(
+                normalizeAngle(rot[0]),
+                normalizeAngle(rot[1]),
+                normalizeAngle(rot[2]),
+                pos[0], pos[1], pos[2]
+        );
+    }
+
 }

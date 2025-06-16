@@ -1,6 +1,10 @@
 package com.magmaguy.freeminecraftmodels.dataconverter;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.internal.LinkedTreeMap;
 import com.magmaguy.freeminecraftmodels.MetadataHandler;
 import com.magmaguy.freeminecraftmodels.utils.StringToResourcePackFilename;
 import com.magmaguy.magmacore.util.Logger;
@@ -16,10 +20,8 @@ import java.io.File;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class FileModelConverter {
 
@@ -31,6 +33,13 @@ public class FileModelConverter {
     private final HashMap<String, Object> outliner = new HashMap<>();
     //Store the texture with the identifier and the name of the texture file
     private final HashMap<Integer, String> textures = new HashMap<>();
+
+    private static final String CATEGORY_DEFAULT = "default";
+    public static final File ANIMATION_DIRECTORY = new File(MetadataHandler.PLUGIN.getDataFolder(), "animations");
+    private static final Gson gson = new Gson();
+
+
+
     private String modelName;
     @Getter
     private SkeletonBlueprint skeletonBlueprint;
@@ -39,12 +48,15 @@ public class FileModelConverter {
     @Getter
     private String ID;
 
+
+
     /**
      * In this instance, the file is the raw bbmodel file which is actually in a JSON format
      *
      * @param file bbmodel file to parse
      */
     public FileModelConverter(File file) {
+
         if (file.getName().contains(".bbmodel")) modelName = file.getName().replace(".bbmodel", "");
         else if (file.getName().contains(".fmmodel")) modelName = file.getName().replace(".fmmodel", "");
         else {
@@ -99,7 +111,9 @@ public class FileModelConverter {
             Integer id = i;
             textures.put(id, imageName.replace(".png", ""));
             base64Image = base64Image.split(",")[base64Image.split(",").length - 1];
-            if (!imageSize.containsKey(imageName)) try {
+            //VSD COMMENTAIRE DE CE IF QUI SERT A RIEN
+            //if (!imageSize.containsKey(imageName))
+            try {
                 ByteArrayInputStream inputStream = new ByteArrayInputStream(Base64Coder.decodeLines(base64Image));
                 File imageFile = new File(MetadataHandler.PLUGIN.getDataFolder().getAbsolutePath() + File.separatorChar + "output" + File.separatorChar + "FreeMinecraftModels" + File.separatorChar + "assets" + File.separatorChar + "freeminecraftmodels" + File.separatorChar + "textures" + File.separatorChar + "entity" + File.separatorChar + modelName + File.separatorChar + imageName);
                 FileUtils.writeByteArrayToFile(imageFile, inputStream.readAllBytes());
@@ -133,11 +147,59 @@ public class FileModelConverter {
         ID = modelName;
         skeletonBlueprint = new SkeletonBlueprint(projectResolution, outlinerValues, values, generateFileTextures(), modelName, null);//todo: pass path
 
-        List animationList = (ArrayList) map.get("animations");
-        if (animationList != null)
-            animationsBlueprint = new AnimationsBlueprint(animationList, modelName, skeletonBlueprint);
+//        List animationList = (ArrayList) map.get("animations");
+//        if (animationList != null)
+//            animationsBlueprint = new AnimationsBlueprint(animationList, modelName, skeletonBlueprint);
+
+        loadAnimationsFromCategory();
+
+//        List<Map<String, Object>> animationDataList = AnimationLoader.getAnimationsForModel(this);
+//        animationsBlueprint = new AnimationsBlueprint(animationDataList, modelName, skeletonBlueprint);
         convertedFileModels.put(modelName, this);//todo: id needs to be more unique, add folder directory into it
     }
+
+
+    private void loadAnimationsFromCategory() {
+
+        if (!ANIMATION_DIRECTORY.exists() || !ANIMATION_DIRECTORY.isDirectory()) {
+            Logger.warn("Animation folder not found");
+            return;
+        }
+
+        File[] animationFiles = ANIMATION_DIRECTORY.listFiles((dir, name) -> name.endsWith(".json"));
+        if (animationFiles == null || animationFiles.length == 0) return;
+
+        List<Object> animationDataList = new ArrayList<>();
+        for (File animFile : animationFiles) {
+            try (Reader reader = Files.newBufferedReader(animFile.toPath())) {
+                Map<String, Object> animData = gson.fromJson(reader, Map.class);
+                Set<String> currentAnimationRig = getRigFromAnimation(animData);
+                if (animationRigMatchesModelRig(currentAnimationRig)) {
+                    animationDataList.add(animData);
+                }
+            } catch (Exception ex) {
+                Logger.warn("Failed to load animation file: " + animFile.getName());
+            }
+        }
+
+        if (!animationDataList.isEmpty()) {
+            animationsBlueprint = new AnimationsBlueprint(animationDataList, modelName, skeletonBlueprint);
+        }
+    }
+
+    private boolean animationRigMatchesModelRig(Set<String> animationRig) {
+        Set<String> modelRig = skeletonBlueprint.getBoneMap().keySet();
+        return modelRig.containsAll(animationRig);
+    }
+
+    private static Set<String> getRigFromAnimation( Map<String, Object> animData) {
+        Set<String> names = (Set<String>) ((Collection) ((LinkedTreeMap) animData.get("animators")).values())
+                .stream()
+                .map(animator -> ((LinkedTreeMap) animator).get("name").toString())
+                .collect(Collectors.toSet());
+        return names;
+    }
+
 
     public static void shutdown() {
         convertedFileModels.clear();

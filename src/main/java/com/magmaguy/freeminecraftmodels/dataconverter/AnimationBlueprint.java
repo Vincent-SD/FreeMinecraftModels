@@ -10,16 +10,22 @@ public class AnimationBlueprint {
     @Getter
     private final HashMap<BoneBlueprint, List<Keyframe>> boneKeyframes = new HashMap<>();
     @Getter
-    private final HashMap<BoneBlueprint, AnimationFrame[]> animationFrames = new HashMap<>();
+    protected final HashMap<BoneBlueprint, AnimationFrame[]> animationFrames = new HashMap<>();
     @Getter
-    private LoopType loopType;
+    protected LoopType loopType;
     @Getter
-    private String animationName;
+    protected String animationName;
     private SkeletonBlueprint skeletonBlueprint;
     @Getter
-    private int duration;
+    protected int duration;
 
     public AnimationBlueprint(Object data, String modelName, SkeletonBlueprint skeletonBlueprint) {
+
+        //VSD fix le temps de faire une classe parente qui englobe AnimationBlueprint et AnimationBlueprintFake
+        if (data == null) {
+            return;
+        }
+
         Map<String, Object> animationData;
         try {
             animationData = (Map<String, Object>) data;

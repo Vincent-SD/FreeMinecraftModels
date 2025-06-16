@@ -52,7 +52,6 @@ public class SpawnCommand extends AdvancedCommand {
             StaticEntity.create(commandData.getStringArgument("model"), location);
         else if (commandData.getStringArgument("type").equalsIgnoreCase("dynamic")){
             DynamicEntity dynamicEntity = DynamicEntity.create(commandData.getStringArgument("model"), (LivingEntity) location.getWorld().spawnEntity(location, EntityType.PIG));
-            dynamicEntity.test();
         }
     }
 }

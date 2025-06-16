@@ -55,8 +55,13 @@ public class SkeletonWatchers implements Listener {
     }
 
     private void displayTo(Player player) {
-        viewers.add(player.getUniqueId());
-        skeleton.getBones().forEach(bone -> bone.displayTo(player));
+        try{
+            viewers.add(player.getUniqueId());
+            skeleton.getBones().forEach(bone -> bone.displayTo(player));
+        }
+        catch (NullPointerException ignore){
+
+        }
     }
 
     private void hideFrom(UUID uuid) {

@@ -79,8 +79,10 @@ public class CubeBlueprint {
             textureDataExists = false;
             return;
         }
-        if (textureDataExists != null && !textureDataExists)
+        if (textureDataExists != null && !textureDataExists){
+            Logger.warn(cubeJSON.get("name").toString());
             Logger.warn("A cube in the model " + modelName + " has a face which does not have a texture while the rest of the cube has a texture. Minecraft does not allow this. Go through every cube in that model and make sure they all either have or do not have textures on all faces, but don't mix having and not having textures for the same cube. The model will appear with the debug black and purple cube texture until fixed.");
+        }
         textureDataExists = true;
         Double textureDouble = (Double) map.get("texture");
         int textureValue = (int) Math.round(textureDouble);

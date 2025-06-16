@@ -107,9 +107,16 @@ public class Skeleton {
      * This updates animations. The plugin runs this automatically, don't use it unless you know what you're doing!
      */
     public void transform() {
+        transform(true);
+    }
+
+    /**
+     * This updates animations. The plugin runs this automatically, don't use it unless you know what you're doing!
+     */
+    public void transform(boolean shouldHeadBeAnimated) {
         boneMap.values().forEach(bone -> {
             if (bone.getBoneBlueprint().getParent() == null)
-                bone.transform();
+                bone.transform(shouldHeadBeAnimated);
         });
     }
 

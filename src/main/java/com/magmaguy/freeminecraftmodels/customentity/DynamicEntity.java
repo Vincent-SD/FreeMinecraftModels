@@ -11,6 +11,7 @@ import lombok.Setter;
 import net.minecraft.world.entity.Display;
 import org.bukkit.*;
 import org.bukkit.craftbukkit.v1_20_R3.inventory.CraftItemStack;
+import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -19,11 +20,14 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.BoundingBox;
+import org.bukkit.util.Vector;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class DynamicEntity extends ModeledEntity implements ModeledEntityInterface {
     @Getter
@@ -33,6 +37,7 @@ public class DynamicEntity extends ModeledEntity implements ModeledEntityInterfa
     @Getter
     private final String name = "default";
     private BukkitTask skeletonSync = null;
+
 
     private static NamespacedKey namespacedKey = new NamespacedKey(MetadataHandler.PLUGIN, "DynamicEntity");
 
@@ -116,11 +121,36 @@ public class DynamicEntity extends ModeledEntity implements ModeledEntityInterfa
                 Location entityLocation = livingEntity.getLocation();
                 entityLocation.setYaw(NMSManager.getAdapter().getBodyRotation(livingEntity));
                 getSkeleton().setCurrentLocation(entityLocation);
-                getSkeleton().setCurrentHeadPitch(livingEntity.getEyeLocation().getPitch());
-                getSkeleton().setCurrentHeadYaw(livingEntity.getEyeLocation().getYaw());
+                if (headRotationSupplier != null){
+                    float[] yawPitch = getYawPitchFromDirection(headRotationSupplier.get());
+                    getSkeleton().setCurrentHeadYaw(yawPitch[0]);
+                    getSkeleton().setCurrentHeadPitch(yawPitch[1]);
+                }
+                else{
+//                    getSkeleton().setCurrentHeadPitch(livingEntity.getEyeLocation().getPitch());
+//                    getSkeleton().setCurrentHeadYaw(livingEntity.getEyeLocation().getYaw());
+                }
             }
         }.runTaskTimer(MetadataHandler.PLUGIN, 0, 1);
     }
+
+    private float[] getYawPitchFromDirection(Vector direction) {
+        double x = direction.getX();
+        double y = direction.getY();
+        double z = direction.getZ();
+
+        double horizontalDistance = Math.sqrt(x * x + z * z);
+
+        float yaw = (float) Math.toDegrees(Math.atan2(-x, z));
+        float pitch = (float) Math.toDegrees(Math.atan2(-y, horizontalDistance));
+
+        return new float[] { yaw, pitch };
+    }
+
+    public void resetHeadRotationSupplier(){
+        this.headRotationSupplier = null;
+    }
+
 
     @Override
     public void remove() {
@@ -145,11 +175,10 @@ public class DynamicEntity extends ModeledEntity implements ModeledEntityInterfa
         minecraftHeadEntity.a(nmsItemStack);
     }
 
-    public void test(){
-        Bukkit.getScheduler().runTaskLater(MetadataHandler.PLUGIN,() -> {
-            setHeadTexture(50019);
-        },20*5);
+    public ItemDisplay getBukkitMinecraftHeadEntity() {
+        return (ItemDisplay) minecraftHeadEntity.getBukkitEntity();
     }
+
 
     @Override
     public BoundingBox getHitbox() {
